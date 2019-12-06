@@ -1,0 +1,16 @@
+# cache
+__pycache__
+*.pyc
+.ipynb_checkpoints
+.pytest_cache
+temp/
+static_cdn/
+static_my_proj/
+
+# pycharm proj conf
+.idea
+
+# data
+*.json
+*.jl
+*.sqlite3
