@@ -1,13 +1,18 @@
+import uuid
+
 from django.db import models
 from django.db.models.signals import pre_save, post_save
 from django.utils.text import slugify
 
-from ecommerce.utils import unique_slug_generator
+from ecommerce.utils import get_filename_ext
 
 
 class ProductQuerySet(models.query.QuerySet):
     def active(self):
         return self.filter(active=True)
+
+    def featured(self):
+        return self.active().filter(featured=True)
 
 
 class ProductManager(models.Manager):
@@ -24,15 +29,24 @@ class ProductManager(models.Manager):
         return qs
 
 
+def product_image_upload(instance, filename):
+    new_filename = uuid.uuid4()
+    name, ext = get_filename_ext(filename)
+    image_name = '{new_filename}{ext}'.format(new_filename=new_filename, ext=ext)
+    return "image/product/{product_id}/{image_name}".format(
+        product_id=instance.id,
+        image_name=image_name
+    )
+
+
 class Product(models.Model):
     title = models.CharField(max_length=120)
-    slug = models.SlugField(unique=True)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(decimal_places=2, max_digits=20, default=29.99)
+    image = models.ImageField(upload_to=product_image_upload)
+    categories = models.ManyToManyField(related_name='products', blank=True)
+    featured = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
-    categories = models.ManyToManyField('Category', blank=True)
-    default = models.ForeignKey('Category', related_name='default_category', null=True, blank=True,
-                                on_delete=models.CASCADE)
 
     objects = ProductManager()
 
